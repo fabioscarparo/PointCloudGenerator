@@ -67,7 +67,7 @@ export class Renderer {
     }
 
     onPointerDown(e) {
-        // e.preventDefault();
+        if (e.pointerType === 'touch') e.preventDefault();
         this.isDragging = true;
         this.lastX = e.clientX;
         this.lastY = e.clientY;
