@@ -30,39 +30,64 @@ export class Renderer {
         this.showGrid = true;
 
         this.resize();
-        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('resize', () => {
+            // small delay to ensure resize completes on mobile
+            setTimeout(() => this.resize(), 100);
+        });
 
-        // Mouse Events
-        this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
-        window.addEventListener('mousemove', this.onMouseMove.bind(this));
-        window.addEventListener('mouseup', this.onMouseUp.bind(this));
+        // Unified Pointer Events (Mouse, Touch, Pen)
+        this.canvas.addEventListener('pointerdown', this.onPointerDown.bind(this));
+        window.addEventListener('pointermove', this.onPointerMove.bind(this));
+        window.addEventListener('pointerup', this.onPointerUp.bind(this));
+        window.addEventListener('pointercancel', this.onPointerUp.bind(this));
 
-        // Touch events
-        const touchHandler = (e) => {
-            if (e.touches.length === 1) {
-                // Force prevent default for single touches to stop scrolling
-                e.preventDefault();
-
-                if (e.type === 'touchstart') {
-                    console.log('Touch Start:', e.touches[0].clientX, e.touches[0].clientY);
-                    this.onMouseDown(e.touches[0]);
-                } else if (e.type === 'touchmove') {
-                    // console.log('Touch Move:', e.touches[0].clientX, e.touches[0].clientY);
-                    this.onMouseMove(e.touches[0]);
-                }
-            }
-        };
-
-        this.canvas.addEventListener('touchstart', touchHandler, { passive: false });
-        this.canvas.addEventListener('touchmove', touchHandler, { passive: false });
-        this.canvas.addEventListener('touchend', (e) => {
-            console.log('Touch End');
-            this.onMouseUp();
-        }, { passive: false });
-        this.canvas.addEventListener('touchcancel', () => this.onMouseUp(), { passive: false });
+        // Disable native touch actions to prevent scroll/zoom conflicts
+        this.canvas.style.touchAction = 'none';
 
         // Zoom functionality
         this.canvas.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
+    }
+
+    onPointerDown(e) {
+        // e.preventDefault();
+        this.isDragging = true;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+
+        if (this.canvas.setPointerCapture) {
+            this.canvas.setPointerCapture(e.pointerId);
+        }
+    }
+
+    onPointerMove(e) {
+        const x = e.clientX;
+        const y = e.clientY;
+
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouseX = x - rect.left;
+        this.mouseY = y - rect.top;
+
+        if (this.isDragging) {
+            const dx = x - this.lastX;
+            const dy = y - this.lastY;
+
+            this.angleY += dx * 0.01;
+            this.angleX += dy * 0.01;
+
+            this.lastX = x;
+            this.lastY = y;
+
+            this.render();
+        } else if (e.pointerType === 'mouse') {
+            this.render(); // Update hover highlights
+        }
+    }
+
+    onPointerUp(e) {
+        this.isDragging = false;
+        if (this.canvas.releasePointerCapture) {
+            this.canvas.releasePointerCapture(e.pointerId);
+        }
     }
 
     onWheel(e) {
@@ -125,37 +150,7 @@ export class Renderer {
         this.render();
     }
 
-    onMouseDown(e) {
-        this.isDragging = true;
-        this.lastX = e.clientX || e.pageX;
-        this.lastY = e.clientY || e.pageY;
-    }
-
-    onMouseMove(e) {
-        const x = e.clientX || e.pageX;
-        const y = e.clientY || e.pageY;
-
-        const rect = this.canvas.getBoundingClientRect();
-        this.mouseX = x - rect.left;
-        this.mouseY = y - rect.top;
-
-        if (this.isDragging) {
-            const dx = x - this.lastX;
-            const dy = y - this.lastY;
-
-            this.angleY += dx * 0.01;
-            this.angleX += dy * 0.01;
-
-            this.lastX = x;
-            this.lastY = y;
-        }
-
-        this.render();
-    }
-
-    onMouseUp() {
-        this.isDragging = false;
-    }
+    // Replacement of old mouse event methods with pointer event methods is handled in constructor chunk
 
     render() {
         const { width, height } = this.canvas;
