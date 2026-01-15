@@ -41,6 +41,10 @@ export class Renderer {
         window.addEventListener('pointerup', this.onPointerUp.bind(this));
         window.addEventListener('pointercancel', this.onPointerUp.bind(this));
 
+        // CRITICAL: Force stop all touch scrolling on the canvas
+        this.canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        this.canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
         // Disable native touch actions to prevent scroll/zoom conflicts
         this.canvas.style.touchAction = 'none';
 
