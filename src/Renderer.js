@@ -38,22 +38,21 @@ export class Renderer {
         window.addEventListener('mouseup', this.onMouseUp.bind(this));
 
         // Touch events
-        this.canvas.addEventListener('touchstart', (e) => {
+        const touchHandler = (e) => {
             if (e.touches.length === 1) {
                 e.preventDefault();
-                this.onMouseDown(e.touches[0]);
+                if (e.type === 'touchstart') {
+                    this.onMouseDown(e.touches[0]);
+                } else if (e.type === 'touchmove') {
+                    this.onMouseMove(e.touches[0]);
+                }
             }
-        }, { passive: false });
+        };
 
-        window.addEventListener('touchmove', (e) => {
-            if (this.isDragging && e.touches.length === 1) {
-                e.preventDefault();
-                this.onMouseMove(e.touches[0]);
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchend', () => this.onMouseUp());
-        window.addEventListener('touchcancel', () => this.onMouseUp());
+        this.canvas.addEventListener('touchstart', touchHandler, { passive: false });
+        this.canvas.addEventListener('touchmove', touchHandler, { passive: false });
+        this.canvas.addEventListener('touchend', () => this.onMouseUp(), { passive: false });
+        this.canvas.addEventListener('touchcancel', () => this.onMouseUp(), { passive: false });
 
         // Zoom functionality
         this.canvas.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
