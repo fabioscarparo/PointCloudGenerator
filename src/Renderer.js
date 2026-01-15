@@ -40,10 +40,14 @@ export class Renderer {
         // Touch events
         const touchHandler = (e) => {
             if (e.touches.length === 1) {
+                // Force prevent default for single touches to stop scrolling
                 e.preventDefault();
+
                 if (e.type === 'touchstart') {
+                    console.log('Touch Start:', e.touches[0].clientX, e.touches[0].clientY);
                     this.onMouseDown(e.touches[0]);
                 } else if (e.type === 'touchmove') {
+                    // console.log('Touch Move:', e.touches[0].clientX, e.touches[0].clientY);
                     this.onMouseMove(e.touches[0]);
                 }
             }
@@ -51,7 +55,10 @@ export class Renderer {
 
         this.canvas.addEventListener('touchstart', touchHandler, { passive: false });
         this.canvas.addEventListener('touchmove', touchHandler, { passive: false });
-        this.canvas.addEventListener('touchend', () => this.onMouseUp(), { passive: false });
+        this.canvas.addEventListener('touchend', (e) => {
+            console.log('Touch End');
+            this.onMouseUp();
+        }, { passive: false });
         this.canvas.addEventListener('touchcancel', () => this.onMouseUp(), { passive: false });
 
         // Zoom functionality
