@@ -36,30 +36,25 @@ export class Renderer {
         });
 
         // Unified Pointer Events (Mouse, Touch, Pen)
-        this.canvas.addEventListener('pointerdown', (e) => {
-            if (e.pointerType === 'touch') this.onPointerDown(e);
-            else this.onPointerDown(e);
-        });
+        this.canvas.addEventListener('pointerdown', this.onPointerDown.bind(this));
 
-        // Ascolta il movimento sul canvas per i touch per essere sicuri che non venga intercettato dallo scroll
-        this.canvas.addEventListener('pointermove', this.onPointerMove.bind(this));
-        window.addEventListener('pointermove', (e) => {
-            if (e.pointerType === 'mouse') this.onPointerMove(e);
-        });
-
+        // Listen on window for move/up to continue drag even if pointer leaves canvas
+        window.addEventListener('pointermove', this.onPointerMove.bind(this));
         window.addEventListener('pointerup', this.onPointerUp.bind(this));
         window.addEventListener('pointercancel', this.onPointerUp.bind(this));
 
-        // CRITICAL: Force stop all touch scrolling on the canvas
-        // Alcuni browser richiedono questo oltre a touch-action: none
-        this.canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) e.preventDefault();
-        }, { passive: false });
-        this.canvas.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1) e.preventDefault();
-        }, { passive: false });
+        // CRITICAL: Block all touch gestures at the source before they trigger page scroll
+        const blockScroll = (e) => {
+            if (e.target === this.canvas) {
+                e.preventDefault();
+            }
+        };
 
-        // Disable native touch actions to prevent scroll/zoom conflicts
+        // Use non-passive listeners on the canvas specifically
+        this.canvas.addEventListener('touchstart', blockScroll, { passive: false });
+        this.canvas.addEventListener('touchmove', blockScroll, { passive: false });
+
+        // Disable native touch actions
         this.canvas.style.touchAction = 'none';
 
         // Zoom functionality
@@ -67,7 +62,10 @@ export class Renderer {
     }
 
     onPointerDown(e) {
-        if (e.pointerType === 'touch') e.preventDefault();
+        if (e.pointerType === 'touch') {
+            e.preventDefault();
+        }
+
         this.isDragging = true;
         this.lastX = e.clientX;
         this.lastY = e.clientY;
@@ -78,6 +76,11 @@ export class Renderer {
     }
 
     onPointerMove(e) {
+        // Prevent default browser behavior (scroll/zoom) for pointer movements on canvas
+        if (e.pointerType === 'touch' && e.target === this.canvas) {
+            e.preventDefault();
+        }
+
         const x = e.clientX;
         const y = e.clientY;
 
