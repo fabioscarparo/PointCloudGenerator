@@ -1,6 +1,6 @@
 import './style.css';
 import { CurveEditor } from './CurveEditor.js';
-import { Renderer } from './Renderer.js';
+import { WebGPURenderer } from './WebGPURenderer.js';
 import { SurfaceGenerator } from './SurfaceGenerator.js';
 import { Exporter } from './Exporter.js';
 
@@ -54,9 +54,15 @@ const sidebar = document.getElementById('sidebar');
 
 // --- Components ---
 const generator = new SurfaceGenerator();
-const renderer = new Renderer(mainCanvasId);
+const renderer = new WebGPURenderer(mainCanvasId);
 
 // Update Logic
+// Update Logic
+
+/**
+ * Main update loop.
+ * Synchronizes UI components, regenerates geometry, and triggers rendering.
+ */
 function update() {
   // Sync geometry mode
   window.geometryMode = elMode.value;
@@ -125,8 +131,31 @@ const horizontalEditor = new CurveEditor(horizontalCanvasId, false, update);
 
 // --- Event Listeners ---
 
-// UI Controls
-elDensity.addEventListener('input', (e) => {
+// 1. Editors
+/**
+ * Event handler for curve editor changes.
+ * Throttle or debounce could be added here if generation becomes expensive.
+ */
+function onCurveUpdate() {
+  update();
+}
+
+verticalEditor.onChange = onCurveUpdate;
+horizontalEditor.onChange = onCurveUpdate;
+
+// 2. Parameters
+/**
+ * Attaches a standard input listener to a UI parameter.
+ * @param {HTMLElement} element - The DOM element.
+ * @param {Function} handler - The callback function.
+ */
+function attachListener(element, handler) {
+  if (element) {
+    element.addEventListener('input', handler);
+  }
+}
+
+attachListener(elDensity, (e) => {
   state.density = parseInt(e.target.value, 10);
   update();
 });
@@ -192,6 +221,17 @@ elShowGrid.addEventListener('change', (e) => {
   renderer.render();
 });
 
+const elGridOpacity = document.getElementById('param-grid-opacity');
+const valGridOpacity = document.getElementById('val-grid-opacity');
+
+if (elGridOpacity) {
+  elGridOpacity.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    renderer.gridOpacity = val;
+    valGridOpacity.textContent = val.toFixed(1);
+  });
+}
+
 const elLightMode = document.getElementById('param-light-mode');
 elLightMode.addEventListener('change', (e) => {
   const isLight = e.target.checked;
@@ -224,14 +264,28 @@ elAspect.addEventListener('change', (e) => {
 });
 
 // Buttons
-btnExportPng.addEventListener('click', () => {
+
+/**
+ * Exports the current view as a PNG image.
+ * Forces a synchronous GPU render to ensure buffer availability.
+ */
+btnExportPng.addEventListener('click', async () => {
+  // 1. Force a fresh render
+  renderer.render();
+
+  // 2. Wait for the GPU to finish rendering to the canvas texture
+  if (renderer.device) {
+    await renderer.device.queue.onSubmittedWorkDone();
+  }
+
+  // 3. Immediately capture the canvas
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   Exporter.toPNG(renderer.canvas, `point-cloud-${timestamp}.png`);
 });
 
 btnExportSvg.addEventListener('click', () => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const { angleX, angleY, zoom, canvas, bgColor, bgTransparent } = renderer;
+  const { angleX, angleY, zoom, offsetX, offsetY, canvas, bgColor, bgTransparent } = renderer;
   const { width, height } = canvas;
 
   Exporter.toSVG(
@@ -239,6 +293,8 @@ btnExportSvg.addEventListener('click', () => {
     angleX,
     angleY,
     zoom,
+    offsetX,
+    offsetY,
     width,
     height,
     state.radius,
