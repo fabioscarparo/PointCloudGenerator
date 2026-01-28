@@ -1,4 +1,4 @@
-import { cubicBezier, interpolateColor } from './math.js';
+import { cubicBezier, sampleBezierSpline, interpolateColor } from './math.js';
 
 export class SurfaceGenerator {
     constructor() {
@@ -17,17 +17,16 @@ export class SurfaceGenerator {
         this.points = [];
         const steps = density;
 
+        const verticalX = verticalCurve.map(p => p.x);
         for (let i = 0; i <= steps; i++) {
-            const t = i / steps;
-
-            // Vertical Curve attributes
-            const vRadius = cubicBezier(t, verticalCurve[0].x, verticalCurve[1].x, verticalCurve[2].x, verticalCurve[3].x);
-            const vHeight = cubicBezier(t, verticalCurve[0].y, verticalCurve[1].y, verticalCurve[2].y, verticalCurve[3].y);
-
-            const yRaw = vHeight * heightScale * 400;
+            const v = i / steps;
+            const vRadius = sampleBezierSpline(v, verticalCurve, 'x');
+            const vHeight = sampleBezierSpline(v, verticalCurve, 'y');
+            const yRaw = vHeight * heightScale * (gridWidth / 2);
 
             for (let j = 0; j <= steps; j++) {
                 const u = j / steps;
+                const t = u;
 
                 let finalX, finalY, finalZ;
 
@@ -39,13 +38,13 @@ export class SurfaceGenerator {
                     finalY = -yRaw;
                 } else if (window.geometryMode === 'sheet') {
                     finalX = (u - 0.5) * gridWidth;
-                    finalZ = (t - 0.5) * gridDepth;
-                    const hHeight = cubicBezier(u, horizontalCurve[0].y, horizontalCurve[1].y, horizontalCurve[2].y, horizontalCurve[3].y);
-                    const combinedY = (vHeight + hHeight) * heightScale * (gridWidth / 2); // Using X-scale for height normalization
+                    finalZ = (v - 0.5) * gridDepth; // Changed from 't' to 'v' to use outer loop's progress
+                    const hHeight = sampleBezierSpline(u, horizontalCurve, 'y');
+                    const combinedY = (vHeight + hHeight) * heightScale * (gridWidth / 2);
                     finalY = -combinedY;
                 } else {
-                    const rawX = cubicBezier(u, horizontalCurve[0].x, horizontalCurve[1].x, horizontalCurve[2].x, horizontalCurve[3].x);
-                    const rawZ = cubicBezier(u, horizontalCurve[0].y, horizontalCurve[1].y, horizontalCurve[2].y, horizontalCurve[3].y);
+                    const rawX = sampleBezierSpline(u, horizontalCurve, 'x');
+                    const rawZ = sampleBezierSpline(u, horizontalCurve, 'y');
 
                     const baseX = (rawX - 0.5) * gridWidth;
                     const baseZ = (rawZ - 0.5) * gridDepth;

@@ -23,6 +23,43 @@ export function cubicBezier(t, p0, p1, p2, p3) {
 }
 
 /**
+ * Samples a value from a Bezier Spline at time t.
+ * @param {number} t - Overall progress [0, 1]
+ * @param {Array<object>} points - Sequence of points {x, y, cp1:{dx,dy}, cp2:{dx,dy}}
+ * @param {string} axis - 'x' or 'y'
+ * @returns {number} The sampled value
+ */
+export function sampleBezierSpline(t, points, axis) {
+  if (points.length < 2) return points[0] ? points[0][axis] : 0;
+
+  const n = points.length - 1;
+  const rawT = t * n;
+  let idx = Math.floor(rawT);
+  const weight = rawT - idx;
+
+  if (idx >= n) {
+    idx = n - 1;
+    return points[n][axis];
+  }
+
+  const pA = points[idx];
+  const pB = points[idx + 1];
+
+  // For axis 'x':
+  // P0 = pA.x
+  // P1 = pA.x + pA.cp2.dx
+  // P2 = pB.x + pB.cp1.dx
+  // P3 = pB.x
+
+  const v0 = pA[axis];
+  const v1 = pA[axis] + (axis === 'x' ? pA.cp2.dx : pA.cp2.dy);
+  const v2 = pB[axis] + (axis === 'x' ? pB.cp1.dx : pB.cp1.dy);
+  const v3 = pB[axis];
+
+  return cubicBezier(weight, v0, v1, v2, v3);
+}
+
+/**
  * Projects a 3D point onto a 2D plane with perspective.
  * @param {number} x
  * @param {number} y
