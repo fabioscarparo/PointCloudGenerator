@@ -33,6 +33,12 @@ export class CurveEditor {
         this.dragIndex = -1;
         this.hoverIndex = -1;
 
+        // Mobile detection
+        this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        this.hitRadius = this.isTouchDevice ? 15 : 8; // Larger touch targets on mobile
+        this.longPressTimer = null;
+        this.longPressDuration = 500; // ms
+
         this.resize();
         window.addEventListener('resize', () => this.resize());
 
@@ -43,19 +49,80 @@ export class CurveEditor {
         this.canvas.addEventListener('dblclick', this.onDoubleClick.bind(this));
         this.canvas.addEventListener('contextmenu', this.onContextMenu.bind(this));
 
-        // Touch support
-        this.canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.onMouseDown(e.touches[0]);
-        }, { passive: false });
-        window.addEventListener('touchmove', (e) => {
-            // e.preventDefault(); // Prevent scrolling
-            this.onMouseMove(e.touches[0]);
-        }, { passive: false });
-        window.addEventListener('touchend', (e) => this.onMouseUp(e));
+        // Enhanced Touch support
+        this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+        this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+        this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
+        this.canvas.addEventListener('touchcancel', this.onTouchEnd.bind(this), { passive: false });
 
         // Start Animation Loop
         this.animate();
+    }
+
+    onTouchStart(e) {
+        e.preventDefault();
+
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            const pos = this.getMousePos(touch);
+
+            // Start long-press timer for adding points
+            this.longPressTimer = setTimeout(() => {
+                this.onLongPress(pos);
+                this.longPressTimer = null;
+            }, this.longPressDuration);
+
+            // Trigger mouse down for dragging
+            this.onMouseDown({ ...touch, button: 0 });
+        } else {
+            // Multi-touch, cancel long press
+            this.clearLongPress();
+        }
+    }
+
+    onTouchMove(e) {
+        e.preventDefault();
+
+        // Cancel long press on move
+        this.clearLongPress();
+
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            this.onMouseMove(touch);
+        }
+    }
+
+    onTouchEnd(e) {
+        e.preventDefault();
+        this.clearLongPress();
+        this.onMouseUp(e);
+    }
+
+    clearLongPress() {
+        if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+        }
+    }
+
+    onLongPress(pos) {
+        // Add point on long press (mobile alternative to double-click)
+        const normalized = this.fromCanvas(pos.x, pos.y);
+
+        this.points.push({
+            ...normalized,
+            cp1: { dx: -0.1, dy: 0 },
+            cp2: { dx: 0.1, dy: 0 }
+        });
+
+        this.selectedPoint = this.points.length - 1;
+        this.draw();
+        if (this.onChange) this.onChange();
+
+        // Visual feedback
+        if (navigator.vibrate) {
+            navigator.vibrate(50); // Haptic feedback if available
+        }
     }
 
     animate() {
@@ -258,12 +325,12 @@ export class CurveEditor {
     }
 
     onMouseDown(e) {
-        if (e.button !== 0) return; // Only left click
+        if (e.button !== undefined && e.button !== 0) return; // Only left click
         const pos = this.getMousePos(e);
 
         this.dragIndex = -1;
         this.dragHandle = 0;
-        const hitRadiusSq = 225;
+        const hitRadiusSq = this.hitRadius * this.hitRadius;
 
         // Check anchors and handles of selected point
         for (let i = 0; i < this.points.length; i++) {

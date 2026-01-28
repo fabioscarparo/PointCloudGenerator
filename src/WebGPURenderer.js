@@ -904,48 +904,37 @@ export class WebGPURenderer {
      * Sets up pointer events for interaction (rotation, panning, zoom).
      */
     setupEvents() {
+        // Touch state tracking
+        this.touches = new Map();
+        this.lastPinchDistance = 0;
+        this.lastTouchCenter = { x: 0, y: 0 };
+
         const onMove = (e) => {
             if (this.isDragging) {
                 const dx = e.clientX - this.lastX;
                 const dy = e.clientY - this.lastY;
                 this.angleY += dx * 0.01;
-                this.angleX -= dy * 0.01; // Invert control to match inverted Y view
+                this.angleX -= dy * 0.01;
                 this.lastX = e.clientX;
                 this.lastY = e.clientY;
                 this.render();
             } else if (this.isPanning) {
                 const dx = e.clientX - this.lastX;
                 const dy = e.clientY - this.lastY;
-                // Scale pan speed by zoom level (closer = slower)
-                // Actually closer = faster visually? Or constant?
-                // Let's keep it 1:1 screen pixels roughly.
-                // But view space moves relative to dist.
-                // Simple factor for now.
                 this.offsetX += dx;
-                this.offsetY += dy; // Inverted as per user request (Drag up -> Move Down) 
-                // Wait, in previous fix we inverted Projection Y (-f).
-                // So +Y in View Space -> +Y in Clip -> -Y in Screen (because +Y NDC is Up, Screen Y is Down).
-                // So dragging Mouse Down (+dy) should move Object Down?
-                // Move Object Down -> Negative Y translation?
-                // Moving Camera UP makes object go DOWN.
-                // Translation is World/Model translation usually.
-                // viewMat = Translate(x, y, z).
-                // If I translate +Y, object moves +Y.
-                // If Object moves +Y (Up), it goes towards top of screen.
-                // Mouse Down is bottom of screen.
-                // So Mouse Down (+dy) -> Object Down (-Y).
-                // So offsetY -= dy.
-
+                this.offsetY += dy;
                 this.lastX = e.clientX;
                 this.lastY = e.clientY;
                 this.render();
             }
         };
+
         const onUp = () => {
             this.isDragging = false;
             this.isPanning = false;
         };
 
+        // Mouse/Pointer events
         this.canvas.addEventListener('pointerdown', (e) => {
             this.lastX = e.clientX;
             this.lastY = e.clientY;
@@ -955,18 +944,146 @@ export class WebGPURenderer {
                 this.isDragging = true;
             } else if (e.button === 1) { // Middle Click
                 this.isPanning = true;
-                e.preventDefault(); // Prevent scroll/paste
+                e.preventDefault();
             }
         });
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
 
+        // Wheel zoom
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             const delta = e.deltaY > 0 ? 0.9 : 1.1;
             this.zoom = Math.max(0.1, Math.min(20, this.zoom * delta));
-            if (document.getElementById('param-zoom')) document.getElementById('param-zoom').value = this.zoom.toFixed(1);
+            if (document.getElementById('param-zoom')) {
+                document.getElementById('param-zoom').value = this.zoom.toFixed(1);
+            }
             this.render();
+        }, { passive: false });
+
+        // Touch events for mobile gestures
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+
+            // Update touch tracking
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                this.touches.set(touch.identifier, {
+                    x: touch.clientX,
+                    y: touch.clientY
+                });
+            }
+
+            if (e.touches.length === 1) {
+                // Single touch - rotation
+                const touch = e.touches[0];
+                this.lastX = touch.clientX;
+                this.lastY = touch.clientY;
+                this.isDragging = true;
+            } else if (e.touches.length === 2) {
+                // Two fingers - prepare for pinch/pan
+                this.isDragging = false;
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+
+                // Calculate initial pinch distance
+                const dx = touch2.clientX - touch1.clientX;
+                const dy = touch2.clientY - touch1.clientY;
+                this.lastPinchDistance = Math.sqrt(dx * dx + dy * dy);
+
+                // Calculate center point for panning
+                this.lastTouchCenter = {
+                    x: (touch1.clientX + touch2.clientX) / 2,
+                    y: (touch1.clientY + touch2.clientY) / 2
+                };
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+
+            if (e.touches.length === 1 && this.isDragging) {
+                // Single touch rotation
+                const touch = e.touches[0];
+                const dx = touch.clientX - this.lastX;
+                const dy = touch.clientY - this.lastY;
+                this.angleY += dx * 0.01;
+                this.angleX -= dy * 0.01;
+                this.lastX = touch.clientX;
+                this.lastY = touch.clientY;
+                this.render();
+            } else if (e.touches.length === 2) {
+                // Two finger gestures
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+
+                // Calculate current pinch distance
+                const dx = touch2.clientX - touch1.clientX;
+                const dy = touch2.clientY - touch1.clientY;
+                const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+                // Pinch to zoom
+                if (this.lastPinchDistance > 0) {
+                    const scale = currentDistance / this.lastPinchDistance;
+                    this.zoom = Math.max(0.1, Math.min(20, this.zoom * scale));
+                    if (document.getElementById('param-zoom')) {
+                        document.getElementById('param-zoom').value = this.zoom.toFixed(1);
+                    }
+                }
+                this.lastPinchDistance = currentDistance;
+
+                // Two-finger pan
+                const currentCenter = {
+                    x: (touch1.clientX + touch2.clientX) / 2,
+                    y: (touch1.clientY + touch2.clientY) / 2
+                };
+
+                const panDx = currentCenter.x - this.lastTouchCenter.x;
+                const panDy = currentCenter.y - this.lastTouchCenter.y;
+                this.offsetX += panDx;
+                this.offsetY += panDy;
+                this.lastTouchCenter = currentCenter;
+
+                this.render();
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+
+            // Remove ended touches from tracking
+            const remainingTouches = new Set();
+            for (let i = 0; i < e.touches.length; i++) {
+                remainingTouches.add(e.touches[i].identifier);
+            }
+
+            for (const id of this.touches.keys()) {
+                if (!remainingTouches.has(id)) {
+                    this.touches.delete(id);
+                }
+            }
+
+            if (e.touches.length === 0) {
+                // All touches ended
+                this.isDragging = false;
+                this.isPanning = false;
+                this.lastPinchDistance = 0;
+            } else if (e.touches.length === 1) {
+                // Back to single touch - resume rotation
+                const touch = e.touches[0];
+                this.lastX = touch.clientX;
+                this.lastY = touch.clientY;
+                this.isDragging = true;
+                this.lastPinchDistance = 0;
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            this.touches.clear();
+            this.isDragging = false;
+            this.isPanning = false;
+            this.lastPinchDistance = 0;
         }, { passive: false });
     }
 }

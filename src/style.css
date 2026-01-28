@@ -169,13 +169,65 @@ body.light-mode {
 .controls-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+}
+
+.control-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.control-section[open] {
+  background: rgba(255, 255, 255, 0.04);
+  padding-bottom: 12px;
+}
+
+.control-section summary {
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  position: relative;
+}
+
+.control-section summary::after {
+  content: '+';
+  font-size: 1.2rem;
+  color: var(--accent);
+  transition: transform 0.3s ease;
+  pointer-events: none;
+  /* Let clicks pass through to summary */
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.control-section[open] summary::after {
+  content: '−';
+}
+
+.control-section .section-title {
+  margin-bottom: 0;
+  flex: 1;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 0 16px;
+  margin-top: 12px;
+}
+
+.toggle-group {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .control-header {

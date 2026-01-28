@@ -45,172 +45,175 @@
       </section>
 
       <!-- All Other Controls -->
+      <!-- Control Sections -->
       <section class="panel-section controls-container">
-        <span class="section-title">Parameters</span>
 
-
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-mode">Geometry Mode</label>
+        <details class="control-section" open>
+          <summary class="section-title">Geometry & Alignment</summary>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-mode">Geometry Mode</label>
+            </div>
+            <select id="param-mode">
+              <option value="sweep">Sweep Shape</option>
+              <option value="revolution">Revolution</option>
+              <option value="sheet">Sheet (Depth Map)</option>
+            </select>
           </div>
-          <select id="param-mode">
-            <option value="sweep">Sweep Shape</option>
-            <option value="revolution">Revolution</option>
-            <option value="sheet">Sheet (Depth Map)</option>
-          </select>
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-color-mode">Color Mode</label>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-aspect">Aspect Ratio</label>
+            </div>
+            <select id="param-aspect">
+              <option value="custom">Custom</option>
+              <option value="16:9">16:9</option>
+              <option value="9:16">9:16</option>
+              <option value="1:1">1:1</option>
+            </select>
           </div>
-          <select id="param-color-mode">
-            <option value="solid">Solid Color</option>
-            <option value="height">Height Gradient</option>
-            <option value="depth">Depth Gradient</option>
-          </select>
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-color">Colors</label>
+          <div class="control-group">
+            <div class="control-header">
+              <label>Grid Dimensions (X / Z)</label>
+            </div>
+            <div class="dual-input-row">
+              <div class="input-with-label">
+                <input type="number" id="param-grid-width" value="400" step="10" min="50" max="2000">
+                <span>Width (X)</span>
+              </div>
+              <div class="input-with-label">
+                <input type="number" id="param-grid-depth" value="400" step="10" min="50" max="2000">
+                <span>Depth (Z)</span>
+              </div>
+            </div>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <input type="color" id="param-color" value="#7c4dff" title="Primary Color">
-            <input type="color" id="param-color2" value="#00aaff" title="Secondary Color">
-          </div>
-        </div>
+        </details>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-density">Density</label>
-            <input type="number" id="val-density" value="30" min="1" max="2000" class="small-input">
+        <details class="control-section" open>
+          <summary class="section-title">Points & Visuals</summary>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-density">Density</label>
+              <input type="number" id="val-density" value="30" min="1" max="2000" class="small-input">
+            </div>
+            <input type="range" id="param-density" min="10" max="500" step="1" value="30">
           </div>
-          <input type="range" id="param-density" min="10" max="500" step="1" value="30">
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-height">Height Scale</label>
-            <span class="control-value" id="val-height">1.0</span>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-color-mode">Color Mode</label>
+            </div>
+            <select id="param-color-mode">
+              <option value="solid">Solid Color</option>
+              <option value="height">Height Gradient</option>
+              <option value="depth">Depth Gradient</option>
+            </select>
           </div>
-          <input type="range" id="param-height" min="0.1" max="3" step="0.1" value="1">
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-radius">Point Radius</label>
-            <span class="control-value" id="val-radius">2.0</span>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-color">Colors</label>
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <input type="color" id="param-color" value="#7c4dff" title="Primary Color">
+              <input type="color" id="param-color2" value="#00aaff" title="Secondary Color">
+            </div>
           </div>
-          <input type="range" id="param-radius" min="1" max="10" step="0.5" value="2">
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-noise">Noise Intensity</label>
-            <span class="control-value" id="val-noise">0.0</span>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-radius">Point Radius</label>
+              <span class="control-value" id="val-radius">2.0</span>
+            </div>
+            <input type="range" id="param-radius" min="1" max="10" step="0.5" value="2">
           </div>
-          <input type="range" id="param-noise" min="0" max="1" step="0.05" value="0">
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-zoom">Zoom</label>
-            <span class="control-value" id="val-zoom">1.0</span>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-noise">Noise Intensity</label>
+              <span class="control-value" id="val-noise">0.0</span>
+            </div>
+            <input type="range" id="param-noise" min="0" max="1" step="0.05" value="0">
           </div>
-          <input type="range" id="param-zoom" min="0.1" max="10" step="0.1" value="1">
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label>Auto-Rotate</label>
-            <label class="switch">
-              <input type="checkbox" id="param-auto-rotate">
-              <span class="slider"></span>
-            </label>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-bloom">Bloom Intensity</label>
+              <span class="control-value" id="val-bloom">0.0</span>
+            </div>
+            <input type="range" id="param-bloom" min="0" max="5" step="0.1" value="0">
           </div>
-        </div>
+        </details>
 
-        <div class="control-group">
-          <div class="control-header">
+        <details class="control-section">
+          <summary class="section-title">Scene & Environment</summary>
+          <div class="control-group toggle-group">
             <label>Transparent BG</label>
             <label class="switch">
               <input type="checkbox" id="param-bg-transparent">
               <span class="slider"></span>
             </label>
           </div>
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-bg-color">Background Color</label>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-bg-color">Background Color</label>
+            </div>
+            <input type="color" id="param-bg-color" value="#000000" style="width: 100%; height: 32px;">
           </div>
-          <input type="color" id="param-bg-color" value="#000000">
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
+          <div class="control-group toggle-group">
             <label>Show Axes</label>
             <label class="switch">
               <input type="checkbox" id="param-show-axes" checked>
               <span class="slider"></span>
             </label>
           </div>
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
+          <div class="control-group toggle-group">
             <label>Show Reference Grid</label>
             <label class="switch">
               <input type="checkbox" id="param-show-grid" checked>
               <span class="slider"></span>
             </label>
           </div>
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-grid-opacity">Grid & Axes Opacity</label>
-            <span class="control-value" id="val-grid-opacity">0.5</span>
-          </div>
-          <input type="range" id="param-grid-opacity" min="0" max="1" step="0.1" value="0.5">
-        </div>
-
-        <div class="control-group">
-          <div class="control-header">
-            <label>Grid Dimensions (X / Z)</label>
-          </div>
-          <div class="dual-input-row">
-            <div class="input-with-label">
-              <input type="number" id="param-grid-width" value="400" step="10" min="50" max="2000">
-              <span>Width (X)</span>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-grid-opacity">Grid & Axes Opacity</label>
+              <span class="control-value" id="val-grid-opacity">0.5</span>
             </div>
-            <div class="input-with-label">
-              <input type="number" id="param-grid-depth" value="400" step="10" min="50" max="2000">
-              <span>Depth (Z)</span>
+            <input type="range" id="param-grid-opacity" min="0" max="1" step="0.1" value="0.5">
+          </div>
+        </details>
+
+        <details class="control-section">
+          <summary class="section-title">Simulation & View</summary>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-height">Height Scale</label>
+              <span class="control-value" id="val-height">1.0</span>
             </div>
+            <input type="range" id="param-height" min="0.1" max="3" step="0.1" value="1">
           </div>
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-aspect">Aspect Ratio</label>
+          <div class="control-group">
+            <div class="control-header">
+              <label for="param-zoom">Zoom</label>
+              <span class="control-value" id="val-zoom">1.0</span>
+            </div>
+            <input type="range" id="param-zoom" min="0.1" max="10" step="0.1" value="1">
           </div>
-          <select id="param-aspect">
-            <option value="custom">Custom</option>
-            <option value="16:9">16:9</option>
-            <option value="9:16">9:16</option>
-            <option value="1:1">1:1</option>
-          </select>
-        </div>
 
-        <div class="control-group">
-          <div class="control-header">
-            <label for="param-bloom">Bloom Intensity</label>
-            <span class="control-value" id="val-bloom">0.0</span>
+          <div class="control-group toggle-group">
+            <label>Auto-Rotate</label>
+            <label class="switch">
+              <input type="checkbox" id="param-auto-rotate">
+              <span class="slider"></span>
+            </label>
           </div>
-          <input type="range" id="param-bloom" min="0" max="5" step="0.1" value="0">
-        </div>
+        </details>
       </section>
 
       <div class="button-group">
