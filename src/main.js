@@ -13,7 +13,9 @@ const state = {
   color2: '#00aaff',
   colorMode: 'solid',
   noise: 0,
-  autoRotate: false
+  autoRotate: false,
+  gridWidth: 400,
+  gridDepth: 400
 };
 
 // --- DOM Elements ---
@@ -36,6 +38,8 @@ const elAutoRotate = document.getElementById('param-auto-rotate');
 const elShowAxes = document.getElementById('param-show-axes');
 const elShowGrid = document.getElementById('param-show-grid');
 const elAspect = document.getElementById('param-aspect');
+const elGridWidth = document.getElementById('param-grid-width');
+const elGridDepth = document.getElementById('param-grid-depth');
 
 // Value displays
 const valDensity = document.getElementById('val-density');
@@ -263,6 +267,18 @@ elAspect.addEventListener('change', (e) => {
   renderer.aspectRatio = e.target.value;
 });
 
+elGridWidth.addEventListener('input', (e) => {
+  state.gridWidth = parseFloat(e.target.value) || 400;
+  renderer.gridWidth = state.gridWidth;
+  update();
+});
+
+elGridDepth.addEventListener('input', (e) => {
+  state.gridDepth = parseFloat(e.target.value) || 400;
+  renderer.gridDepth = state.gridDepth;
+  update();
+});
+
 // Buttons
 
 /**
@@ -318,9 +334,13 @@ btnReset.addEventListener('click', () => {
     color: '#7c4dff',
     color2: '#00aaff',
     colorMode: 'solid',
-    noise: 0
+    noise: 0,
+    gridWidth: 400,
+    gridDepth: 400
   });
   renderer.zoom = 1;
+  renderer.gridWidth = 400;
+  renderer.gridDepth = 400;
 
   // Reset UI
   elDensity.value = state.density;
@@ -331,6 +351,8 @@ btnReset.addEventListener('click', () => {
   elColor2.value = state.color2;
   elColorMode.value = state.colorMode;
   elNoise.value = state.noise;
+  elGridWidth.value = state.gridWidth;
+  elGridDepth.value = state.gridDepth;
   elMode.value = 'sweep';
   elBgColor.value = '#000000';
   elBgTransparent.checked = false;

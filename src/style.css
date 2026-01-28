@@ -221,7 +221,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 select,
-input[type="color"] {
+input[type="color"],
+input[type="number"] {
   background: var(--input-bg);
   border: 1px solid var(--border);
   color: var(--text-main);
@@ -231,6 +232,29 @@ input[type="color"] {
   font-size: 0.85rem;
   outline: none;
   cursor: pointer;
+}
+
+.dual-input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.input-with-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-with-label span {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-with-label input[type="number"] {
+  width: 100%;
 }
 
 /* Toggle Switch */

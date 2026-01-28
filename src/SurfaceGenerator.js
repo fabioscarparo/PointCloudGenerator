@@ -13,7 +13,7 @@ export class SurfaceGenerator {
      * @param {object} params Configuration parameters.
      */
     generate(verticalCurve, horizontalCurve, params) {
-        const { density, height: heightScale, color, color2, colorMode, noise } = params;
+        const { density, height: heightScale, color, color2, colorMode, noise, gridWidth = 400, gridDepth = 400 } = params;
         this.points = [];
         const steps = density;
 
@@ -33,22 +33,22 @@ export class SurfaceGenerator {
 
                 if (window.geometryMode === 'revolution') {
                     const angle = u * Math.PI * 2;
-                    const rBase = 200 * vRadius;
+                    const rBase = (gridWidth / 2) * vRadius;
                     finalX = Math.cos(angle) * rBase;
                     finalZ = Math.sin(angle) * rBase;
                     finalY = -yRaw;
                 } else if (window.geometryMode === 'sheet') {
-                    finalX = (u - 0.5) * 400;
-                    finalZ = (t - 0.5) * 400;
+                    finalX = (u - 0.5) * gridWidth;
+                    finalZ = (t - 0.5) * gridDepth;
                     const hHeight = cubicBezier(u, horizontalCurve[0].y, horizontalCurve[1].y, horizontalCurve[2].y, horizontalCurve[3].y);
-                    const combinedY = (vHeight + hHeight) * heightScale * 200;
+                    const combinedY = (vHeight + hHeight) * heightScale * (gridWidth / 2); // Using X-scale for height normalization
                     finalY = -combinedY;
                 } else {
                     const rawX = cubicBezier(u, horizontalCurve[0].x, horizontalCurve[1].x, horizontalCurve[2].x, horizontalCurve[3].x);
                     const rawZ = cubicBezier(u, horizontalCurve[0].y, horizontalCurve[1].y, horizontalCurve[2].y, horizontalCurve[3].y);
 
-                    const baseX = (rawX - 0.5) * 400;
-                    const baseZ = (rawZ - 0.5) * 400;
+                    const baseX = (rawX - 0.5) * gridWidth;
+                    const baseZ = (rawZ - 0.5) * gridDepth;
 
                     finalX = baseX * vRadius;
                     finalZ = baseZ * vRadius;
@@ -70,7 +70,7 @@ export class SurfaceGenerator {
                     finalColor = interpolateColor(color, color2, vHeight);
                 } else if (colorMode === 'depth') {
                     // Depth gradient based on Z
-                    const factor = Math.max(0, Math.min(1, (finalZ + 200) / 400));
+                    const factor = Math.max(0, Math.min(1, (finalZ + (gridDepth / 2)) / gridDepth));
                     finalColor = interpolateColor(color, color2, factor);
                 }
 

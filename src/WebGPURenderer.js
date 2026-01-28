@@ -136,6 +136,8 @@ export class WebGPURenderer {
         this._gridOpacity = 0.5;
         this._theme = 'dark';
         this._aspectRatio = 'custom';
+        this._gridWidth = 400;
+        this._gridDepth = 400;
 
         // WebGPU Objects
         this.pipeline = null;
@@ -378,6 +380,24 @@ export class WebGPURenderer {
     }
     get theme() { return this._theme; }
 
+    set gridWidth(val) {
+        if (this._gridWidth !== val) {
+            this._gridWidth = val;
+            this.generateGrid();
+            this.render();
+        }
+    }
+    get gridWidth() { return this._gridWidth; }
+
+    set gridDepth(val) {
+        if (this._gridDepth !== val) {
+            this._gridDepth = val;
+            this.generateGrid();
+            this.render();
+        }
+    }
+    get gridDepth() { return this._gridDepth; }
+
     /**
      * Updates the point cloud data and uploads it to the GPU vertex buffer.
      * @param {Array<{x:number, y:number, z:number, color:string}>} points - The array of points to render.
@@ -571,7 +591,8 @@ export class WebGPURenderer {
      * @param {boolean} [forceUpdate=false] - Whether to force regeneration.
      */
     generateGrid(forceUpdate = false) {
-        const size = 200;
+        const widthHalf = this._gridWidth / 2;
+        const depthHalf = this._gridDepth / 2;
         const steps = 4;
         const vertices = [];
         const color = this._theme === 'light' ? [0, 0, 0] : [1, 1, 1];
@@ -582,11 +603,15 @@ export class WebGPURenderer {
 
         if (this._showGrid) {
             for (let i = -steps; i <= steps; i++) {
-                const pos = (i / steps) * size;
-                vertices.push(pos, 0, -size, color[0], color[1], color[2]);
-                vertices.push(pos, 0, size, color[0], color[1], color[2]);
-                vertices.push(-size, 0, pos, color[0], color[1], color[2]);
-                vertices.push(size, 0, pos, color[0], color[1], color[2]);
+                // Lines parallel to Z
+                const xPos = (i / steps) * widthHalf;
+                vertices.push(xPos, 0, -depthHalf, color[0], color[1], color[2]);
+                vertices.push(xPos, 0, depthHalf, color[0], color[1], color[2]);
+
+                // Lines parallel to X
+                const zPos = (i / steps) * depthHalf;
+                vertices.push(-widthHalf, 0, zPos, color[0], color[1], color[2]);
+                vertices.push(widthHalf, 0, zPos, color[0], color[1], color[2]);
             }
         }
 
