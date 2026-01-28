@@ -9,8 +9,8 @@ An interactive **high-performance 3D point cloud generator** powered by **WebGPU
 
 - **High-Performance WebGPU Rendering**: 
   - Ultra-fast rendering using modern GPU APIs
-  - **High DPI (Retina) support** for crystal-clear visuals
-  - **Smoothstep Anti-aliasing** for perfectly round points
+  - High DPI (Retina) support for crystal-clear visuals
+  - Smoothstep Anti-aliasing for perfectly round points
 - **Multiple Geometry Modes**:
   - Sweep Shape: Extrude a shape along a path
   - Revolution: Create solids of revolution
@@ -20,16 +20,16 @@ An interactive **high-performance 3D point cloud generator** powered by **WebGPU
   - Height-based gradient
   - Depth-based gradient
 - **Comprehensive Interaction**:
-  - **Rotation**: Instinctive mouse-based 3D rotation
-  - **Panning**: Middle mouse button (wheel) drag to reposition the view
-  - **Zoom**: Scroll wheel or slider based zooming
+  - Rotation: Instinctive mouse-based 3D rotation
+  - Panning: Middle mouse button (wheel) drag to reposition the view
+  - Zoom: Scroll wheel or slider based zooming
 - **Comprehensive Controls**:
   - Adjustable point density
   - Height scaling
   - Point radius
   - Noise intensity
   - Customizable background (color and transparency)
-  - **Grid & Axes Opacity**: Adjustable reference grid transparency
+  - Grid & Axes Opacity: Adjustable reference grid transparency
 - **Multiple Export Formats**:
   - PNG (raster image)
   - SVG (vector graphics)
