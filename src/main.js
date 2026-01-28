@@ -260,7 +260,7 @@ elLightMode.addEventListener('change', (e) => {
 });
 
 elAspect.addEventListener('change', (e) => {
-  renderer.setAspectRatio(e.target.value);
+  renderer.aspectRatio = e.target.value;
 });
 
 // Buttons
@@ -335,7 +335,7 @@ btnReset.addEventListener('click', () => {
   elBgColor.value = '#000000';
   elBgTransparent.checked = false;
   elAutoRotate.checked = false;
-  renderer.setAspectRatio('custom');
+  renderer.aspectRatio = 'custom';
 
   verticalEditor.reset();
   horizontalEditor.reset();

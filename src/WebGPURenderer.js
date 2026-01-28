@@ -309,6 +309,12 @@ export class WebGPURenderer {
             }
         }
 
+        if (this.aspectRatio === 'custom') {
+            this.canvas.classList.remove('fixed-aspect');
+        } else {
+            this.canvas.classList.add('fixed-aspect');
+        }
+
         this.canvas.width = Math.ceil(finalW * window.devicePixelRatio);
         this.canvas.height = Math.ceil(finalH * window.devicePixelRatio);
         this.canvas.style.width = this.aspectRatio === 'custom' ? '100%' : `${finalW}px`;
@@ -318,6 +324,14 @@ export class WebGPURenderer {
             this.createDepthTexture();
             this.render();
         }
+    }
+
+    /**
+     * Set the aspect ratio and trigger a resize.
+     * @param {string} val - The aspect ratio (e.g., '16:9', '1:1', or 'custom').
+     */
+    setAspectRatio(val) {
+        this.aspectRatio = val;
     }
 
 
