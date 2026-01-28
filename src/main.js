@@ -94,7 +94,7 @@ function update() {
   }
 
   // Sync Values
-  valDensity.textContent = state.density;
+  valDensity.value = state.density;
   valHeight.textContent = state.height.toFixed(1);
   valRadius.textContent = state.radius.toFixed(1);
   valZoom.textContent = renderer.zoom.toFixed(1);
@@ -161,6 +161,13 @@ function attachListener(element, handler) {
 
 attachListener(elDensity, (e) => {
   state.density = parseInt(e.target.value, 10);
+  valDensity.value = state.density;
+  update();
+});
+
+attachListener(valDensity, (e) => {
+  state.density = parseInt(e.target.value, 10) || 10;
+  elDensity.value = Math.min(500, state.density);
   update();
 });
 

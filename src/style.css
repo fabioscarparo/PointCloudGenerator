@@ -257,6 +257,14 @@ input[type="number"] {
   width: 100%;
 }
 
+.small-input {
+  width: 70px;
+  height: 28px !important;
+  padding: 2px 8px !important;
+  font-size: 0.75rem !important;
+  text-align: right;
+}
+
 /* Toggle Switch */
 .switch {
   position: relative;
