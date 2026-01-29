@@ -366,7 +366,7 @@ export class WebGPURenderer {
         });
 
         this.uniformBuffer = this.device.createBuffer({
-            size: 96, // aligned to 16 bytes. 24 floats -> 96 bytes? No. 
+            size: 96,
             // Struct alignment rules:
             // mat4 (64)
             // f32 (4) pointSize
@@ -383,7 +383,7 @@ export class WebGPURenderer {
         this.createPostProcessingResources();
 
         if (this.points.length > 0) {
-            this.setPoints(this.points); // usage of device to create buffer
+            this.setPoints(this.points);
         } else {
             this.render();
         }
@@ -623,7 +623,7 @@ export class WebGPURenderer {
 
         const rotY = this.mat4RotateY(this.angleY);
         const rotX = this.mat4RotateX(this.angleX);
-        const modelMat = this.mat4Multiply(rotX, rotY); // Switching back to RotX * RotY as user preferred this interaction.
+        const modelMat = this.mat4Multiply(rotX, rotY);
 
         const dist = 1000.0 / this.zoom;
         const viewMat = this.mat4Translate(this.offsetX, this.offsetY, -dist); // Apply Pan
@@ -634,9 +634,6 @@ export class WebGPURenderer {
         const mvMat = this.mat4Multiply(viewMat, modelMat);
         const mvpMat = this.mat4Multiply(projMat, mvMat);
 
-        // Debug Log (throttled locally by logic if needed, but here just dump if needed)
-        // Removed as per request
-
         const uniformData = new Float32Array(24);
         uniformData.set(mvpMat);
         uniformData[16] = this.pointRadius * window.devicePixelRatio; // Scale point size by DPI
@@ -644,7 +641,6 @@ export class WebGPURenderer {
         uniformData[18] = this.canvas.width;
         uniformData[19] = this.canvas.height;
         uniformData[20] = this._gridOpacity;
-        // 21, 22, 23 pad
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
     }
@@ -759,8 +755,6 @@ export class WebGPURenderer {
         const color = this._theme === 'light' ? [0, 0, 0] : [1, 1, 1];
 
         if (!this.device) return;
-
-        // We also might want to check if theme changed, but forcing update from outside is better
 
         if (this._showGrid) {
             for (let i = -steps; i <= steps; i++) {
