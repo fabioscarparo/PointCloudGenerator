@@ -11,6 +11,7 @@ import { CurveEditor } from './CurveEditor.js';
 import { WebGPURenderer } from './WebGPURenderer.js';
 import { SurfaceGenerator } from './SurfaceGenerator.js';
 import { Exporter } from './Exporter.js';
+import { presets } from './presets.js';
 
 /**
  * Application state object containing all generation parameters.
@@ -52,6 +53,7 @@ const elShowGrid = document.getElementById('param-show-grid');
 const elBloom = document.getElementById('param-bloom');
 const valBloom = document.getElementById('val-bloom');
 const elAspect = document.getElementById('param-aspect');
+const elPreset = document.getElementById('param-preset');
 const elGridWidth = document.getElementById('param-grid-width');
 const elGridDepth = document.getElementById('param-grid-depth');
 
@@ -223,6 +225,33 @@ elNoise.addEventListener('input', (e) => {
 elMode.addEventListener('change', () => {
   update();
 });
+
+// Populate Presets
+if (elPreset) {
+  Object.keys(presets).forEach(key => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = presets[key].label;
+    elPreset.appendChild(option);
+  });
+
+  elPreset.addEventListener('change', (e) => {
+    const key = e.target.value;
+    if (key === 'custom') return;
+
+    const preset = presets[key];
+    if (preset) {
+      // Clone points to avoid reference issues
+      verticalEditor.points = preset.vertical.map(p => ({ ...p }));
+      horizontalEditor.points = preset.horizontal.map(p => ({ ...p }));
+
+      // Update UI
+      verticalEditor.draw();
+      horizontalEditor.draw();
+      update();
+    }
+  });
+}
 
 elBgColor.addEventListener('input', () => {
   update();
