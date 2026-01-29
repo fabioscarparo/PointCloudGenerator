@@ -379,8 +379,15 @@ export class WebGPURenderer {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
 
+        // Axes Gizmo Uniform (separate to handle rotation-only view)
+        this.axesUniformBuffer = this.device.createBuffer({
+            size: 96, // Must match Uniforms struct size in lineShader (including padding)
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+
         this.createDepthTexture();
         this.createPostProcessingResources();
+        this.createAxesGizmo(); // Init gizmo geometry
 
         if (this.points.length > 0) {
             this.setPoints(this.points);
@@ -428,6 +435,56 @@ export class WebGPURenderer {
         this.brightTexture = this.device.createTexture({ size: [w, h], format: this.format, usage });
         this.blurTextureA = this.device.createTexture({ size: [w, h], format: this.format, usage });
         this.blurTextureB = this.device.createTexture({ size: [w, h], format: this.format, usage });
+    }
+
+    createAxesGizmo() {
+        if (!this.device) return;
+        // Simple RGB axes of length 1 + Labels
+        const offset = 1.2;
+        const s = 0.1; // Letter size half-width
+
+        const vertices = [
+            // X Axis (Red)
+            0, 0, 0, 1, 0, 0,
+            1, 0, 0, 1, 0, 0,
+            // Letter X at (1.2, 0, 0)
+            offset, s, s, 1, 0, 0,
+            offset, -s, -s, 1, 0, 0,
+            offset, -s, s, 1, 0, 0,
+            offset, s, -s, 1, 0, 0,
+
+            // Y Axis (Green)
+            0, 0, 0, 0, 1, 0,
+            0, 1, 0, 0, 1, 0,
+            // Letter Y at (0, 1.2, 0)
+            -s, offset + s, 0, 0, 1, 0,
+            0, offset, 0, 0, 1, 0,
+            s, offset + s, 0, 0, 1, 0,
+            0, offset, 0, 0, 1, 0,
+            0, offset, 0, 0, 1, 0,
+            0, offset - s, 0, 0, 1, 0,
+
+            // Z Axis (Blue)
+            0, 0, 0, 0, 0, 1,
+            0, 0, 1, 0, 0, 1,
+            // Letter Z at (0, 0, 1.2)
+            -s, s, offset + s, 0, 0, 1,
+            s, s, offset + s, 0, 0, 1,
+            s, s, offset + s, 0, 0, 1,
+            -s, -s, offset + s, 0, 0, 1,
+            -s, -s, offset + s, 0, 0, 1,
+            s, -s, offset + s, 0, 0, 1,
+        ];
+
+        const data = new Float32Array(vertices);
+        this.axesVertexBuffer = this.device.createBuffer({
+            size: data.byteLength,
+            usage: GPUBufferUsage.VERTEX,
+            mappedAtCreation: true
+        });
+        new Float32Array(this.axesVertexBuffer.getMappedRange()).set(data);
+        this.axesVertexBuffer.unmap();
+        this.axesVertexCount = vertices.length / 6;
     }
 
     /**
@@ -771,10 +828,7 @@ export class WebGPURenderer {
         }
 
         if (this._showAxes) {
-            const axisSize = 100;
-            vertices.push(0, 0, 0, 1, 0, 0); vertices.push(axisSize, 0, 0, 1, 0, 0);
-            vertices.push(0, 0, 0, 0, 1, 0); vertices.push(0, -axisSize, 0, 0, 1, 0);
-            vertices.push(0, 0, 0, 0, 0, 1); vertices.push(0, 0, axisSize, 0, 0, 1);
+            // Axes are now drawn as a separate gizmo, removing from main grid buffer
         }
 
         this.gridVertexCount = vertices.length / 6;
@@ -858,6 +912,55 @@ export class WebGPURenderer {
             pass.setVertexBuffer(0, this.vertexBuffer);
             pass.draw(6, this.pointCount);
         }
+
+        // --- Axes Gizmo Pass (Bottom-Left Corner) ---
+        if (this.showAxes && this.axesVertexBuffer) {
+            // 1. Calculate Gizmo MVP
+            // Use same rotation as camera, but no translation (centered)
+            // Fixed viewport size for gizmo (e.g. 100x100)
+            const gizmoSize = 100;
+            const aspect = 1.0;
+            const rotY = this.mat4RotateY(this.angleY);
+            const rotX = this.mat4RotateX(this.angleX);
+            const modelMat = this.mat4Multiply(rotX, rotY);
+
+            // Camera at fixed distance looking at origin
+            const viewMat = this.mat4Translate(0, 0, -2.5);
+            const projMat = this.mat4Perspective((60 * Math.PI) / 180, aspect, 0.1, 100.0);
+
+            const mvMat = this.mat4Multiply(viewMat, modelMat);
+            const gizmoMVP = this.mat4Multiply(projMat, mvMat);
+
+            // Create full uniform data (96 bytes / 24 floats)
+            const uniformData = new Float32Array(24);
+            uniformData.set(gizmoMVP, 0); // Matrix (0-15)
+            // 16: pointSize (unused)
+            // 17: Padding
+            uniformData[18] = gizmoSize; // screenSize.x (used for aspect correction or disregarded)
+            uniformData[19] = gizmoSize; // screenSize.y
+            uniformData[20] = 1.0; // gridOpacity = 1.0 (fully visible)
+
+            this.device.queue.writeBuffer(this.axesUniformBuffer, 0, uniformData);
+
+            // 2. Set Viewport & Draw
+            // WebGPU viewport Y is top-left, so calculate bottom Y (height - size - margin)
+            const gizmoY = this.canvas.height - gizmoSize - 20;
+            pass.setViewport(20, gizmoY, gizmoSize, gizmoSize, 0, 1);
+
+            pass.setPipeline(this.linePipeline);
+            // Create bind group for gizmo if needed (or reuse if layout matches and buffer different? No, need new BG for new buffer)
+            // We can't reuse the bindgroup because it points to 'uniformBuffer', we need 'axesUniformBuffer'
+            // We need to create a temporary bindgroup or cache it. Given it changes rarely (viewport doesn't affect binding), let's just create one.
+            const axesBindGroup = this.device.createBindGroup({
+                layout: this.linePipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: { buffer: this.axesUniformBuffer } }]
+            });
+
+            pass.setBindGroup(0, axesBindGroup);
+            pass.setVertexBuffer(0, this.axesVertexBuffer);
+            pass.draw(this.axesVertexCount);
+        }
+
         pass.end();
 
         // 2. Extraction Pass
