@@ -458,19 +458,12 @@ function toggleMobileMenu() {
 mobileMenuToggle.addEventListener('click', toggleMobileMenu);
 mobileBackdrop.addEventListener('click', toggleMobileMenu);
 
-// Close mobile menu when clicking on a control
-if (window.innerWidth <= 768) {
-  sidebar.addEventListener('click', (e) => {
-    // Close menu when interacting with controls, but not when scrolling
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') {
-      setTimeout(() => {
-        if (sidebar.classList.contains('mobile-open')) {
-          toggleMobileMenu();
-        }
-      }, 300);
-    }
-  });
-}
+// Close mobile menu when clicking on the backdrop
+mobileBackdrop.addEventListener('click', () => {
+  if (sidebar.classList.contains('mobile-open')) {
+    toggleMobileMenu();
+  }
+});
 
 // Initial Draw & Start Animation
 update();
